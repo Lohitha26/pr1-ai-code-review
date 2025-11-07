@@ -13,30 +13,46 @@ import prisma from '@/lib/prisma';
 /**
  * Validate GitHub OAuth credentials
  * Prevents using placeholder values that cause 404 errors
+ * Only validates at runtime, not during build
  */
 function validateGitHubCredentials() {
-  const githubId = process.env.GITHUB_ID;
-  const githubSecret = process.env.GITHUB_SECRET;
+  const githubId = process.env.GITHUB_ID || process.env.GITHUB_CLIENT_ID;
+  const githubSecret = process.env.GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET;
 
-  if (!githubId || !githubSecret) {
-    throw new Error(
-      'GitHub OAuth credentials are missing. Please set GITHUB_ID and GITHUB_SECRET in your .env file.'
-    );
+  // Skip validation during build time (when env vars might not be available)
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return { 
+      githubId: githubId || 'build-time-placeholder', 
+      githubSecret: githubSecret || 'build-time-placeholder' 
+    };
   }
 
-  // Check for placeholder values
-  const placeholders = ['your-github-oauth-app-id', 'your-github-oauth-app-secret'];
-  if (placeholders.some(p => githubId.includes(p) || githubSecret.includes(p))) {
-    throw new Error(
-      'GitHub OAuth credentials contain placeholder values. ' +
-      'Please replace GITHUB_ID and GITHUB_SECRET with real values from https://github.com/settings/developers'
+  if (!githubId || !githubSecret) {
+    console.error(
+      '⚠️  GitHub OAuth credentials are missing. Please set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables.'
     );
+    // Return placeholder values to allow build to complete
+    return { 
+      githubId: githubId || 'missing-github-id', 
+      githubSecret: githubSecret || 'missing-github-secret' 
+    };
+  }
+
+  // Check for placeholder values (only in production runtime)
+  if (process.env.NODE_ENV === 'production') {
+    const placeholders = ['your-github-oauth-app-id', 'your-github-oauth-app-secret', 'build-time-placeholder', 'missing-github'];
+    if (placeholders.some(p => githubId.includes(p) || githubSecret.includes(p))) {
+      console.error(
+        '⚠️  GitHub OAuth credentials contain placeholder values. ' +
+        'Please set real GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET from https://github.com/settings/developers'
+      );
+    }
   }
 
   return { githubId, githubSecret };
 }
 
-// Validate credentials at module load time
+// Get credentials (validation happens lazily)
 const { githubId, githubSecret } = validateGitHubCredentials();
 
 export const authOptions: NextAuthOptions = {

@@ -24,6 +24,15 @@ COPY . .
 
 # Build Next.js app
 ENV NEXT_TELEMETRY_DISABLED 1
+# Set build-time environment to skip validation
+ENV NEXT_PHASE phase-production-build
+# Provide dummy values for build (real values injected at runtime by Railway)
+ENV GITHUB_CLIENT_ID build-placeholder
+ENV GITHUB_CLIENT_SECRET build-placeholder
+ENV NEXTAUTH_SECRET build-placeholder
+ENV NEXTAUTH_URL http://localhost:3000
+ENV DATABASE_URL postgresql://placeholder:placeholder@localhost:5432/placeholder
+ENV OPENAI_API_KEY sk-placeholder
 RUN npm run build
 
 # Production image, copy all the files and run next
