@@ -6,6 +6,9 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
+# Set build-time DATABASE_URL for Prisma
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public"
+
 # Copy package files
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -13,7 +16,7 @@ COPY prisma ./prisma/
 # Install dependencies
 RUN npm ci
 
-# Generate Prisma Client
+# Generate Prisma Client (needs DATABASE_URL even though it won't connect)
 RUN npx prisma generate
 
 # Rebuild the source code only when needed
@@ -31,7 +34,8 @@ ENV GITHUB_CLIENT_ID build-placeholder
 ENV GITHUB_CLIENT_SECRET build-placeholder
 ENV NEXTAUTH_SECRET build-placeholder
 ENV NEXTAUTH_URL http://localhost:3000
-ENV DATABASE_URL postgresql://placeholder:placeholder@localhost:5432/placeholder
+ENV DATABASE_URL "postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public"
+ENV REDIS_URL "redis://localhost:6379"
 ENV OPENAI_API_KEY sk-placeholder
 RUN npm run build
 
