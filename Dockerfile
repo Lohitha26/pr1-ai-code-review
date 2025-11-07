@@ -1,4 +1,5 @@
 # Multi-stage build for production deployment
+# Cache bust: 2024-11-07-v2
 FROM node:18-alpine AS base
 
 # Install dependencies only when needed
@@ -6,18 +7,15 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Set build-time DATABASE_URL for Prisma
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public"
-
-# Copy package files
+# Copy package files first
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm ci
+# Set build-time DATABASE_URL for Prisma (MUST be set before npm ci)
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder?schema=public"
 
-# Generate Prisma Client (needs DATABASE_URL even though it won't connect)
-RUN npx prisma generate
+# Install dependencies (this will run postinstall: prisma generate)
+RUN npm ci --verbose
 
 # Rebuild the source code only when needed
 FROM base AS builder
