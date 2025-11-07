@@ -1,0 +1,134 @@
+// Prisma schema for Real-Time Code Collaboration Platform
+// This defines our database structure using Prisma's declarative syntax
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - stores authenticated user information
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  ownedSessions CodeSession[] @relation("SessionOwner")
+  participants  Participant[]
+
+  @@map("users")
+}
+
+// Account model - OAuth provider accounts (GitHub, etc.)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// Session model - NextAuth session management
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// VerificationToken model - for email verification
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// CodeSession model - represents a collaborative coding session
+model CodeSession {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  language    String   @default("javascript") // Programming language
+  isPublic    Boolean  @default(true)
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Yjs document state - stores the CRDT state as binary
+  yjsState    Bytes?   @db.ByteA
+  
+  // Last snapshot of the code (human-readable backup)
+  lastSnapshot String? @db.Text
+  
+  // Relations
+  owner        User          @relation("SessionOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  participants Participant[]
+  messages     ChatMessage[]
+
+  @@index([ownerId])
+  @@index([createdAt])
+  @@map("code_sessions")
+}
+
+// Participant model - tracks who's in each session
+model Participant {
+  id        String   @id @default(cuid())
+  sessionId String
+  userId    String
+  role      String   @default("editor") // "owner", "editor", "viewer"
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+
+  // Relations
+  session CodeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
+  @@map("participants")
+}
+
+// ChatMessage model - stores chat messages within sessions
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  userId    String
+  userName  String   // Denormalized for performance
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  // Relations
+  session CodeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
+}

@@ -1,0 +1,188 @@
+═══════════════════════════════════════════════════════════════
+  RAILWAY DEPLOYMENT CHECKLIST - AI CODE REVIEW
+═══════════════════════════════════════════════════════════════
+
+PART 1: GITHUB SETUP
+═══════════════════════════════════════════════════════════════
+
+□ Step 1: Initialize Git
+  Command: git init
+
+□ Step 2: Configure Git
+  Command: git config user.name "Your Name"
+  Command: git config user.email "your.email@example.com"
+
+□ Step 3: Add Files
+  Command: git add .
+
+□ Step 4: Commit
+  Command: git commit -m "Initial commit: AI Code Review application"
+
+□ Step 5: Create GitHub Repository
+  URL: https://github.com/new
+  - Name: ai-code-review
+  - Don't initialize with README
+
+□ Step 6: Push to GitHub
+  Command: git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+  Command: git branch -M main
+  Command: git push -u origin main
+
+
+PART 2: RAILWAY SETUP
+═══════════════════════════════════════════════════════════════
+
+□ Step 7: Create Railway Account
+  URL: https://railway.app
+  - Sign up with GitHub
+
+□ Step 8: Create New Project
+  - Click "New Project"
+  - Select "Deploy from GitHub repo"
+  - Choose your repository
+
+□ Step 9: Verify Build Settings
+  - Builder: Dockerfile
+  - Dockerfile Path: Dockerfile
+
+□ Step 10: Add PostgreSQL Database
+  - Click "New" → "Database" → "PostgreSQL"
+
+□ Step 11: Add Redis (Optional)
+  - Click "New" → "Database" → "Redis"
+
+□ Step 12: Generate NEXTAUTH_SECRET
+  Command: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+  Copy output: _______________________________________
+
+
+PART 3: ENVIRONMENT VARIABLES
+═══════════════════════════════════════════════════════════════
+
+□ Add to Railway Variables Tab:
+
+  DATABASE_URL = (auto-added by Railway PostgreSQL)
+  
+  NEXTAUTH_URL = https://YOUR_APP_NAME.up.railway.app
+  
+  NEXTAUTH_SECRET = (paste from step 12)
+  
+  GITHUB_CLIENT_ID = _______________________________________
+  
+  GITHUB_CLIENT_SECRET = _______________________________________
+  
+  OPENAI_API_KEY = _______________________________________
+  
+  NODE_ENV = production
+  
+  REDIS_URL = (auto-added if using Redis)
+
+
+PART 4: GITHUB OAUTH SETUP
+═══════════════════════════════════════════════════════════════
+
+□ Step 13: Create Production OAuth App
+  URL: https://github.com/settings/developers
+  
+  Application name: AI Code Review (Production)
+  
+  Homepage URL: https://YOUR_APP_NAME.up.railway.app
+  
+  Callback URL: https://YOUR_APP_NAME.up.railway.app/api/auth/callback/github
+  
+  Copy Client ID: _______________________________________
+  
+  Copy Client Secret: _______________________________________
+
+
+PART 5: DEPLOYMENT
+═══════════════════════════════════════════════════════════════
+
+□ Step 14: Wait for Build
+  - Monitor "Deployments" tab
+  - Check logs for errors
+
+□ Step 15: Verify Database Migrations
+  - Start command should include: npx prisma migrate deploy
+
+□ Step 16: Get Your App URL
+  - Go to Settings → Domains
+  - Copy Railway domain: _______________________________________
+
+
+PART 6: TESTING
+═══════════════════════════════════════════════════════════════
+
+□ Test Homepage
+  URL: https://YOUR_APP_NAME.up.railway.app
+
+□ Test GitHub Login
+  - Click login button
+  - Authorize with GitHub
+  - Verify successful login
+
+□ Test Code Review Creation
+  - Create new session
+  - Verify it loads
+
+□ Test Real-time Features
+  - Open session in two browsers
+  - Verify Socket.io connection
+
+□ Test AI Features
+  - Submit code for review
+  - Verify AI response
+
+
+PART 7: CONTINUOUS DEPLOYMENT
+═══════════════════════════════════════════════════════════════
+
+□ Make a test change
+  Command: git add .
+  Command: git commit -m "Test deployment"
+  Command: git push
+
+□ Verify auto-deployment in Railway
+
+
+TROUBLESHOOTING CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+If something doesn't work:
+
+□ Check Railway logs for errors
+□ Verify all environment variables are set
+□ Confirm GitHub OAuth callback URL matches Railway domain
+□ Ensure DATABASE_URL is present
+□ Check that build completed successfully
+□ Verify NEXTAUTH_URL matches your Railway domain
+□ Test database connection
+□ Check Socket.io logs
+
+
+IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════
+
+✓ Railway automatically provides DATABASE_URL
+✓ Use PRODUCTION GitHub OAuth credentials (not development)
+✓ NEXTAUTH_URL must match your Railway domain exactly
+✓ Railway supports WebSockets (Socket.io will work)
+✓ Migrations run automatically on deployment
+✓ Auto-deploy triggers on every git push
+
+
+YOUR DEPLOYMENT INFO
+═══════════════════════════════════════════════════════════════
+
+GitHub Repository: _______________________________________
+
+Railway Project: _______________________________________
+
+Railway Domain: _______________________________________
+
+Deployment Date: _______________________________________
+
+
+═══════════════════════════════════════════════════════════════
+  DEPLOYMENT COMPLETE! 🚀
+═══════════════════════════════════════════════════════════════
